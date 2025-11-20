@@ -1,7 +1,9 @@
 "use client";
 
 import { Bath, BedDouble, Heart, MapPin, Square } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const PROPERTY_FILTERS = [
   "View All",
@@ -11,64 +13,34 @@ const PROPERTY_FILTERS = [
   "Farm",
 ];
 
-const PROPERTIES = [
-  {
-    id: 1,
-    title: "Charming Beach House",
-    location: "39581 Rohan Estates, New York",
-    type: "Apartment",
-    status: "For Sale",
-    beds: 4,
-    baths: 2,
-    area: 1500,
-    price: "$179,800.00",
-    image:
-      "https://images.unsplash.com/photo-1502672023488-70e25813eb80?q=80&w=1200&auto=format",
-  },
-  {
-    id: 2,
-    title: "Contemporary Loft",
-    location: "39581 Rohan Estates, New York",
-    type: "Commercial",
-    status: "For Sale",
-    beds: 4,
-    baths: 2,
-    area: 1500,
-    price: "$335,800.00",
-    image:
-      "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?q=80&w=1200&auto=format",
-  },
-  {
-    id: 3,
-    title: "Cozy Cottage",
-    location: "39581 Rohan Estates, New York",
-    type: "Land Or Plot",
-    status: "For Sale",
-    beds: 4,
-    baths: 2,
-    area: 1500,
-    price: "$250,800.00",
-    image: "/images/pr3.png",
-  },
-  {
-    id: 4,
-    title: "Modern Beach House",
-    location: "39581 Rohan Estates, New York",
-    type: "Farm",
-    status: "For Sale",
-    beds: 4,
-    baths: 2,
-    area: 1500,
-    price: "$189,800.00",
-    image:
-      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1200&auto=format",
-  },
-  // add more cards if you want second row etc.
-];
-
 export default function FeaturedProperties() {
   const [activeFilter, setActiveFilter] = useState("View All");
   const [favorites, setFavorites] = useState([]);
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/properties?limit=8");
+        const result = await response.json();
+
+        if (result.success) {
+          setProperties(result.data);
+        } else {
+          toast.error("Failed to load properties");
+        }
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+        toast.error("Error loading properties");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   const toggleFavorite = (id) => {
     setFavorites((prev) =>
@@ -78,8 +50,16 @@ export default function FeaturedProperties() {
 
   const filteredProperties =
     activeFilter === "View All"
-      ? PROPERTIES
-      : PROPERTIES.filter((p) => p.type === activeFilter);
+      ? properties
+      : properties.filter((p) => p.type === activeFilter);
+
+  const formatPrice = (amount) =>
+    amount.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
 
   return (
     <section className="w-full bg-white py-10 md:py-16">
@@ -120,82 +100,110 @@ export default function FeaturedProperties() {
         </div>
 
         {/* Cards grid */}
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProperties.map((property) => {
-            const isFav = favorites.includes(property.id);
-            return (
-              <article
-                key={property.id}
-                className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg"
-              >
-                {/* Image + top badges */}
-                <div className="relative h-56 w-full overflow-hidden">
-                  <img
-                    src={property.image}
-                    alt={property.title}
-                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
-                  />
-
-                  {/* For Sale badge */}
-                  <div className="absolute left-4 top-4 rounded-md bg-black/80 px-3 py-1 text-xs font-semibold text-white">
-                    {property.status}
-                  </div>
-
-                  {/* Heart icon */}
-                  <button
-                    onClick={() => toggleFavorite(property.id)}
-                    className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md transition hover:bg-white"
+        {loading ? (
+          <div className="mt-8 flex items-center justify-center py-20">
+            <div className="text-lg text-gray-600">Loading properties...</div>
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredProperties.length === 0 ? (
+              <div className="col-span-full py-20 text-center text-gray-600">
+                No properties found
+              </div>
+            ) : (
+              filteredProperties.map((property) => {
+                const isFav = favorites.includes(property._id);
+                return (
+                  <article
+                    key={property._id}
+                    className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg"
                   >
-                    <Heart
-                      className={`h-4 w-4 ${
-                        isFav ? "fill-red-500 text-red-500" : "text-gray-500"
-                      }`}
-                    />
-                  </button>
-                </div>
+                    {/* Image + top badges */}
+                    <div className="relative h-56 w-full overflow-hidden">
+                      <img
+                        src={
+                          property.mainImage ||
+                          property.images?.[0] ||
+                          "/images/pr.png"
+                        }
+                        alt={property.title}
+                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
+                      />
 
-                {/* Main content */}
-                <div className="flex flex-1 flex-col">
-                  <div className="border-b border-gray-100 px-5 pb-4 pt-5">
-                    <h3 className="line-clamp-1 text-[17px] font-semibold text-gray-900">
-                      {property.title}
-                    </h3>
-                    <div className="mt-2 flex items-center gap-1 text-sm text-gray-500">
-                      <MapPin className="h-4 w-4 text-red-500" />
-                      <span className="line-clamp-1">{property.location}</span>
+                      {/* For Sale badge */}
+                      <div className="absolute left-4 top-4 rounded-md bg-black/80 px-3 py-1 text-xs font-semibold text-white">
+                        {property.status}
+                      </div>
+
+                      {/* Heart icon */}
+                      <button
+                        onClick={() => toggleFavorite(property._id)}
+                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md transition hover:bg-white"
+                      >
+                        <Heart
+                          className={`h-4 w-4 ${
+                            isFav
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-500"
+                          }`}
+                        />
+                      </button>
                     </div>
 
-                    {/* amenities */}
-                    <div className="mt-4 flex items-center justify-between gap-4 text-xs text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <BedDouble className="h-4 w-4" />
-                        <span>Bed {property.beds}</span>
+                    {/* Main content */}
+                    <div className="flex flex-1 flex-col">
+                      <div className="border-b border-gray-100 px-5 pb-4 pt-5">
+                        <h3 className="line-clamp-1 text-[17px] font-semibold text-gray-900">
+                          <Link
+                            href={`/properties/${property._id}`}
+                            className="hover:text-red-500 transition-colors"
+                          >
+                            {property.title}
+                          </Link>
+                        </h3>
+                        <div className="mt-2 flex items-center gap-1 text-sm text-gray-500">
+                          <MapPin className="h-4 w-4 text-red-500" />
+                          <span className="line-clamp-1">
+                            {property.address}
+                          </span>
+                        </div>
+
+                        {/* amenities */}
+                        <div className="mt-4 flex items-center justify-between gap-4 text-xs text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <BedDouble className="h-4 w-4" />
+                            <span>Bed {property.beds}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Bath className="h-4 w-4" />
+                            <span>Bath {property.baths}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Square className="h-4 w-4" />
+                            <span>{property.area} sqft</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Bath className="h-4 w-4" />
-                        <span>Bath {property.baths}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Square className="h-4 w-4" />
-                        <span>{property.area} sqft</span>
+
+                      {/* Footer: price + button */}
+                      <div className="flex items-center justify-between px-5 py-4">
+                        <p className="text-lg font-semibold text-gray-900">
+                          {formatPrice(property.price)}
+                        </p>
+                        <Link
+                          href={`/properties/${property._id}`}
+                          className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 transition hover:border-gray-900 hover:bg-gray-900 hover:text-white"
+                        >
+                          View More
+                        </Link>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Footer: price + button */}
-                  <div className="flex items-center justify-between px-5 py-4">
-                    <p className="text-lg font-semibold text-gray-900">
-                      {property.price}
-                    </p>
-                    <button className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 transition hover:border-gray-900 hover:bg-gray-900 hover:text-white">
-                      View More
-                    </button>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

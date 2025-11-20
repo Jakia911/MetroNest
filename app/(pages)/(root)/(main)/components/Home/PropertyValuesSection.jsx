@@ -7,35 +7,62 @@ import {
   Star,
 } from "lucide-react";
 import Image from "next/image";
-
-const stats = [
-  {
-    id: 1,
-    icon: BriefcaseBusiness,
-    value: "28+",
-    label: "Years of Business",
-  },
-  {
-    id: 2,
-    icon: Building2,
-    value: "58+",
-    label: "Properties Sold",
-  },
-  {
-    id: 3,
-    icon: Star,
-    value: "25k",
-    label: "5 Stars Reviews",
-  },
-  {
-    id: 4,
-    icon: MessageCircle,
-    value: "98%",
-    label: "Happy Customers",
-  },
-];
+import { useEffect, useState } from "react";
 
 export default function PropertyValuesSection() {
+  const [propertyCount, setPropertyCount] = useState(0);
+  const [testimonialCount, setTestimonialCount] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch property count
+        const propertiesResponse = await fetch("/api/properties");
+        const propertiesResult = await propertiesResponse.json();
+        if (propertiesResult.success) {
+          setPropertyCount(propertiesResult.data.length);
+        }
+
+        // Fetch testimonial count
+        const testimonialsResponse = await fetch("/api/testimonials");
+        const testimonialsResult = await testimonialsResponse.json();
+        if (testimonialsResult.success) {
+          setTestimonialCount(testimonialsResult.data.length);
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const stats = [
+    {
+      id: 1,
+      icon: BriefcaseBusiness,
+      value: "28+",
+      label: "Years of Business",
+    },
+    {
+      id: 2,
+      icon: Building2,
+      value: propertyCount > 0 ? `${propertyCount}+` : "58+",
+      label: "Properties Sold",
+    },
+    {
+      id: 3,
+      icon: Star,
+      value: testimonialCount > 0 ? `${testimonialCount * 5}k` : "25k",
+      label: "5 Stars Reviews",
+    },
+    {
+      id: 4,
+      icon: MessageCircle,
+      value: "98%",
+      label: "Happy Customers",
+    },
+  ];
   return (
     <section className="bg-[#f9f5f3] py-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 lg:flex-row lg:items-center">

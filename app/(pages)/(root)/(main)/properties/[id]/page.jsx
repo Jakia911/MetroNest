@@ -16,126 +16,247 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-
-// Same base properties so id/title/price stay in sync with cards
-const properties = [
-  {
-    id: 1,
-    title: "Charming Beach House",
-    address: "39581 Rohan Estates, New York",
-    price: 5805,
-    beds: 4,
-    baths: 2,
-    area: 1500,
-    status: "Featured",
-    date: "05 Jun, 2024",
-    commentsCount: 0,
-    mainImage: "/images/pr.png",
-    images: [
-      "/images/pr.png",
-      "/images/pr2.png",
-      "/images/pr3.png",
-      "/images/pr4.png",
-      "/images/pr5.png",
-      "/images/pr2.png",
-    ],
-  },
-  {
-    id: 2,
-    title: "Contemporary Loft",
-    address: "39581 Rohan Estates, New York",
-    price: 8850,
-    beds: 4,
-    baths: 2,
-    area: 1959,
-    status: "Featured",
-    date: "12 Jul, 2024",
-    commentsCount: 3,
-    mainImage: "/images/pr2.png",
-    images: [
-      "/images/pr2.png",
-      "/images/pr3.png",
-      "/images/pr4.png",
-      "/images/pr5.png",
-      "/images/pr.png",
-    ],
-  },
-  // add more if you want, they’ll fall back to first if id not found
-];
-
-const highlights = [
-  { label: "ID NO.", value: "#45231" },
-  { label: "Type", value: "Residential" },
-  { label: "Room", value: "4" },
-  { label: "Bedroom", value: "3" },
-  { label: "Bath", value: "2" },
-  { label: "Big Yard", value: "Yes" },
-  { label: "Parking", value: "2 Cars" },
-  { label: "Jacuzzi", value: "Yes" },
-  { label: "Pool", value: "Yes" },
-  { label: "Heating", value: "Central" },
-];
-
-const amenities = [
-  "Airconditioning",
-  "Balcony",
-  "Garage",
-  "Lawn",
-  "Microwave",
-  "Outdoor Kitchen",
-  "Refrigerator",
-  "Washer",
-  "Wi-Fi",
-  "Security",
-  "Jacuzzi",
-  "Indoor Games",
-  "Gym",
-  "Sauna",
-  "Dishwasher",
-  "Smart Locks",
-];
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const floorTabs = ["First Floor", "Second Floor", "Third Floor", "Top Garden"];
 
-const featuredSidebarListings = [
-  {
-    id: 1,
-    title: "Cometes Contabesco Audacia Aeneus Tui Canonicus",
-    beds: 2,
-    baths: 2,
-    area: 1959,
-    price: 9850,
-    image: "/images/pr.png",
-  },
-  {
-    id: 2,
-    title: "Cometes Contabesco Audacia Aeneus Tui Canonicus",
-    beds: 2,
-    baths: 2,
-    area: 1959,
-    price: 8850,
-    image: "/images/pr2.png",
-  },
-  {
-    id: 3,
-    title: "Cometes Contabesco Audacia Aeneus Tui Canonicus",
-    beds: 2,
-    baths: 2,
-    area: 1959,
-    price: 7850,
-    image: "/images/pr3.png",
-  },
-];
+// Contact Form Component
+function ContactForm({ propertyId }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          propertyId: propertyId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(result.message || "Message sent successfully!");
+        setFormData({ name: "", email: "", phone: "", message: "" });
+      } else {
+        toast.error(result.error || "Failed to send message");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Error sending message");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+      {/* Name */}
+      <div className="space-y-1">
+        <label
+          htmlFor="contact-name"
+          className="text-[11px] font-medium text-slate-700 mb-[10px] block"
+        >
+          Name
+        </label>
+        <input
+          id="contact-name"
+          type="text"
+          placeholder="Enter your name"
+          required
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[#444] placeholder:text-[#444] outline-none focus:border-[#f05454] focus:ring-1 focus:ring-[#f05454]/20"
+        />
+      </div>
+
+      {/* Email */}
+      <div className="space-y-1">
+        <label
+          htmlFor="contact-email"
+          className="text-[11px] font-medium text-slate-700 mb-[10px] block"
+        >
+          Email
+        </label>
+        <input
+          id="contact-email"
+          type="email"
+          placeholder="Enter your email"
+          required
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[#444] placeholder:text-[#444] outline-none focus:border-[#f05454] focus:ring-1 focus:ring-[#f05454]/20"
+        />
+      </div>
+
+      {/* Phone */}
+      <div className="space-y-1">
+        <label
+          htmlFor="contact-phone"
+          className="text-[11px] font-medium text-slate-700 mb-[10px] block"
+        >
+          Phone
+        </label>
+        <input
+          id="contact-phone"
+          type="text"
+          placeholder="Enter your phone number"
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[#444] placeholder:text-[#444] outline-none focus:border-[#f05454] focus:ring-1 focus:ring-[#f05454]/20"
+        />
+      </div>
+
+      {/* Message */}
+      <div className="space-y-1">
+        <label
+          htmlFor="contact-message"
+          className="text-[11px] font-medium text-slate-700 mb-[10px] block"
+        >
+          Message
+        </label>
+        <textarea
+          id="contact-message"
+          rows={3}
+          placeholder="Write your message"
+          required
+          value={formData.message}
+          onChange={(e) =>
+            setFormData({ ...formData, message: e.target.value })
+          }
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[#444] placeholder:text-[#444] outline-none focus:border-[#f05454] focus:ring-1 focus:ring-[#f05454]/20"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="flex w-full items-center justify-center gap-2 rounded-full bg-[#f05454] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#e14343] disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <Mail className="h-3.5 w-3.5" />
+        {submitting ? "Sending..." : "Send Us"}
+      </button>
+    </form>
+  );
+}
 
 export default function PropertyDetailsPage({ params }) {
-  const propertyId = Number(params.id);
-  const property = properties.find((p) => p.id === propertyId) || properties[0];
-
+  const propertyId = params.id;
+  const [property, setProperty] = useState(null);
+  const [featuredListings, setFeaturedListings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [activeFloor, setActiveFloor] = useState(floorTabs[0]);
 
-  const images = property.images || [property.mainImage];
+  // Fetch property details
+  useEffect(() => {
+    const fetchProperty = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/properties/${propertyId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          setProperty(result.data);
+        } else {
+          toast.error(result.error || "Property not found");
+        }
+      } catch (error) {
+        console.error("Error fetching property:", error);
+        toast.error("Error loading property");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch featured listings for sidebar
+    const fetchFeaturedListings = async () => {
+      try {
+        const response = await fetch("/api/properties?featured=true&limit=3");
+        const result = await response.json();
+        if (result.success) {
+          setFeaturedListings(result.data);
+        }
+      } catch (error) {
+        console.error("Error fetching featured listings:", error);
+      }
+    };
+
+    if (propertyId) {
+      fetchProperty();
+      fetchFeaturedListings();
+    }
+  }, [propertyId]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-lg text-slate-600">Loading property...</div>
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-lg text-slate-600">Property not found</div>
+      </div>
+    );
+  }
+
+  const images =
+    property.images && property.images.length > 0
+      ? property.images
+      : property.mainImage
+      ? [property.mainImage]
+      : ["/images/pr.png"];
+
+  // Build highlights from property data
+  const highlights = property.highlights
+    ? [
+        { label: "ID NO.", value: property.highlights.idNo || "N/A" },
+        { label: "Type", value: property.type || "Residential" },
+        {
+          label: "Room",
+          value: String(property.highlights.room || property.beds || 0),
+        },
+        {
+          label: "Bedroom",
+          value: String(property.highlights.bedroom || property.beds || 0),
+        },
+        {
+          label: "Bath",
+          value: String(property.highlights.bath || property.baths || 0),
+        },
+        {
+          label: "Big Yard",
+          value: property.highlights.bigYard ? "Yes" : "No",
+        },
+        { label: "Parking", value: property.highlights.parking || "N/A" },
+        { label: "Jacuzzi", value: property.highlights.jacuzzi ? "Yes" : "No" },
+        { label: "Pool", value: property.highlights.pool ? "Yes" : "No" },
+        { label: "Heating", value: property.highlights.heating || "N/A" },
+      ]
+    : [];
+
+  const amenities =
+    property.amenities && property.amenities.length > 0
+      ? property.amenities
+      : [];
 
   const handlePrevImage = () => {
     setActiveImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -149,8 +270,19 @@ export default function PropertyDetailsPage({ params }) {
     amount.toLocaleString("en-US", {
       style: "currency",
       currency: "USD",
-      minimumFractionDigits: 2,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     });
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    const d = new Date(date);
+    return d.toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   return (
     <section className="w-full bg-[#f5f7fb] py-10 md:py-16">
@@ -234,7 +366,7 @@ export default function PropertyDetailsPage({ params }) {
 
               <div className="flex items-center gap-1 text-slate-500">
                 <Calendar className="h-3.5 w-3.5 text-[#f05454]" />
-                <span>{property.date}</span>
+                <span>{formatDate(property.date)}</span>
               </div>
 
               <div className="flex items-center gap-1 text-slate-500">
@@ -484,37 +616,48 @@ export default function PropertyDetailsPage({ params }) {
               Featured Listings
             </h3>
             <div className="space-y-4">
-              {featuredSidebarListings.map((item) => (
-                <Link
-                  href={`/properties/${item.id}`}
-                  key={item.id}
-                  className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-2.5 text-xs hover:border-[#f05454]/60"
-                >
-                  <div className="relative h-16 w-20 overflow-hidden rounded-xl">
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col justify-between">
-                    <p className="line-clamp-2 font-semibold text-[11px] text-slate-900">
-                      {item.title}
-                    </p>
-                    <div className="mt-1 flex items-center flex-wrap gap-2 text-[10px] text-slate-500">
-                      <span>Bed {item.beds}</span>
-                      <span className="h-3 w-px bg-slate-200" />
-                      <span>Bath {item.baths}</span>
-                      <span className="h-3 w-px bg-slate-200" />
-                      <span>{item.area} sqft</span>
-                    </div>
-                    <p className="mt-1 text-[11px] font-semibold text-[#f05454]">
-                      ${item.price.toLocaleString()}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+              {featuredListings.length === 0 ? (
+                <p className="text-xs text-slate-500">No featured listings</p>
+              ) : (
+                featuredListings
+                  .filter((item) => item._id !== property._id)
+                  .slice(0, 3)
+                  .map((item) => (
+                    <Link
+                      href={`/properties/${item._id}`}
+                      key={item._id}
+                      className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-2.5 text-xs hover:border-[#f05454]/60"
+                    >
+                      <div className="relative h-16 w-20 overflow-hidden rounded-xl">
+                        <Image
+                          src={
+                            item.mainImage ||
+                            item.images?.[0] ||
+                            "/images/pr.png"
+                          }
+                          alt={item.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col justify-between">
+                        <p className="line-clamp-2 font-semibold text-[11px] text-slate-900">
+                          {item.title}
+                        </p>
+                        <div className="mt-1 flex items-center flex-wrap gap-2 text-[10px] text-slate-500">
+                          <span>Bed {item.beds}</span>
+                          <span className="h-3 w-px bg-slate-200" />
+                          <span>Bath {item.baths}</span>
+                          <span className="h-3 w-px bg-slate-200" />
+                          <span>{item.area} sqft</span>
+                        </div>
+                        <p className="mt-1 text-[11px] font-semibold text-[#f05454]">
+                          {formatPrice(item.price)}
+                        </p>
+                      </div>
+                    </Link>
+                  ))
+              )}
             </div>
           </div>
 
@@ -524,79 +667,7 @@ export default function PropertyDetailsPage({ params }) {
               Contact Us
             </h3>
 
-            <form className="space-y-3 text-xs">
-              {/* Name */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="contact-name"
-                  className="text-[11px] font-medium text-slate-700 mb-[10px] block"
-                >
-                  Name
-                </label>
-                <input
-                  id="contact-name"
-                  type="text"
-                  placeholder="Enter your name"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[#444] placeholder:text-[#444] outline-none focus:border-[#f05454] focus:ring-1 focus:ring-[#f05454]/20"
-                />
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="contact-email"
-                  className="text-[11px] font-medium text-slate-700 mb-[10px] block"
-                >
-                  Email
-                </label>
-                <input
-                  id="contact-email"
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[#444] placeholder:text-[#444] outline-none focus:border-[#f05454] focus:ring-1 focus:ring-[#f05454]/20"
-                />
-              </div>
-
-              {/* Phone */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="contact-phone"
-                  className="text-[11px] font-medium text-slate-700 mb-[10px] block"
-                >
-                  Phone
-                </label>
-                <input
-                  id="contact-phone"
-                  type="text"
-                  placeholder="Enter your phone number"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[#444] placeholder:text-[#444] outline-none focus:border-[#f05454] focus:ring-1 focus:ring-[#f05454]/20"
-                />
-              </div>
-
-              {/* Message */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="contact-message"
-                  className="text-[11px] font-medium text-slate-700 mb-[10px] block"
-                >
-                  Message
-                </label>
-                <textarea
-                  id="contact-message"
-                  rows={3}
-                  placeholder="Write your message"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[#444] placeholder:text-[#444] outline-none focus:border-[#f05454] focus:ring-1 focus:ring-[#f05454]/20"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#f05454] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#e14343]"
-              >
-                <Mail className="h-3.5 w-3.5" />
-                Send Us
-              </button>
-            </form>
+            <ContactForm propertyId={property._id} />
           </div>
 
           {/* CTA card */}

@@ -4,6 +4,7 @@
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -13,7 +14,6 @@ export default function ContactSection() {
     subject: "",
     message: "",
   });
-  const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
   function handleChange(e) {
@@ -21,22 +21,46 @@ export default function ContactSection() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      setStatus("Message sent successfully!");
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        subject: "",
-        message: "",
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.subject
+            ? `Subject: ${formData.subject}\n\n${formData.message}`
+            : formData.message,
+        }),
       });
-      setTimeout(() => setStatus(null), 3000);
-    }, 900);
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(result.message || "Message sent successfully!");
+        setFormData({
+          name: "",
+          phone: "",
+          email: "",
+          subject: "",
+          message: "",
+        });
+      } else {
+        toast.error(result.error || "Failed to send message");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Error sending message");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -147,10 +171,6 @@ export default function ContactSection() {
                 >
                   {loading ? "Sending..." : "Send Message"}
                 </button>
-
-                {status && (
-                  <p className="mt-2 text-xs text-emerald-600">{status}</p>
-                )}
               </div>
             </form>
           </div>

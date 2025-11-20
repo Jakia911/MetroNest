@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
@@ -10,90 +11,37 @@ import "swiper/css/autoplay";
 
 import { Bath, Bed, Heart, MapPin, Ruler } from "lucide-react";
 
-const properties = [
-  {
-    id: 1,
-    title: "Charming Beach House",
-    location: "39581 Rohan Estates, New York",
-    price: "$179,800.00",
-    beds: 4,
-    baths: 2,
-    sqft: 1500,
-    image: "/images/pr.png",
-  },
-  {
-    id: 2,
-    title: "Contemporary Loft",
-    location: "39581 Rohan Estates, New York",
-    price: "$335,800.00",
-    beds: 4,
-    baths: 2,
-    sqft: 1500,
-    image: "/images/pr2.png",
-  },
-  {
-    id: 3,
-    title: "Cozy Cottage",
-    location: "39581 Rohan Estates, New York",
-    price: "$250,800.00",
-    beds: 4,
-    baths: 2,
-    sqft: 1500,
-    image: "/images/pr3.png",
-  },
-  {
-    id: 4,
-    title: "Modern Beach House",
-    location: "39581 Rohan Estates, New York",
-    price: "$189,800.00",
-    beds: 4,
-    baths: 2,
-    sqft: 1500,
-    image: "/images/pr4.png",
-  },
-  {
-    id: 1,
-    title: "Charming Beach House",
-    location: "39581 Rohan Estates, New York",
-    price: "$179,800.00",
-    beds: 4,
-    baths: 2,
-    sqft: 1500,
-    image: "/images/pr.png",
-  },
-  {
-    id: 5,
-    title: "Contemporary Loft",
-    location: "39581 Rohan Estates, New York",
-    price: "$335,800.00",
-    beds: 4,
-    baths: 2,
-    sqft: 1500,
-    image: "/images/pr2.png",
-  },
-  {
-    id: 6,
-    title: "Cozy Cottage",
-    location: "39581 Rohan Estates, New York",
-    price: "$250,800.00",
-    beds: 4,
-    baths: 2,
-    sqft: 1500,
-    image: "/images/pr3.png",
-  },
-  {
-    id: 7,
-    title: "Modern Beach House",
-    location: "39581 Rohan Estates, New York",
-    price: "$189,800.00",
-    beds: 4,
-    baths: 2,
-    sqft: 1500,
-    image: "/images/pr4.png",
-  },
-];
-
 export default function PropertyCarousel() {
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/properties?limit=8");
+        const result = await response.json();
+
+        if (result.success) {
+          setProperties(result.data);
+        }
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
+  const formatPrice = (amount) =>
+    amount.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
   return (
     <section className="py-20 bg-white">
       <div className="mx-auto max-w-[1600px] px-4">
@@ -107,89 +55,108 @@ export default function PropertyCarousel() {
           </h2>
         </div>
 
-        <Swiper
-          modules={[Autoplay]}
-          autoplay={{ delay: 2500, disableOnInteraction: false }}
-          spaceBetween={25}
-          slidesPerView={1.1}
-          breakpoints={{
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-            1280: { slidesPerView: 4 },
-          }}
-        >
-          {properties.map((property) => (
-            <SwiperSlide key={property.id}>
-              <div className="rounded-xl bg-white shadow-md overflow-hidden  hover:shadow-xl transition">
-                {/* Image Wrapper */}
-                <div className="relative h-64 w-full">
-                  <Image
-                    src={property.image}
-                    alt={property.title}
-                    fill
-                    className="object-cover"
-                  />
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-lg text-gray-600">Loading properties...</div>
+          </div>
+        ) : properties.length === 0 ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-lg text-gray-600">No properties found</div>
+          </div>
+        ) : (
+          <Swiper
+            modules={[Autoplay]}
+            autoplay={{ delay: 2500, disableOnInteraction: false }}
+            spaceBetween={25}
+            slidesPerView={1.1}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+              1280: { slidesPerView: 4 },
+            }}
+          >
+            {properties.map((property) => (
+              <SwiperSlide key={property._id}>
+                <div className="rounded-xl bg-white shadow-md overflow-hidden  hover:shadow-xl transition">
+                  {/* Image Wrapper */}
+                  <div className="relative h-64 w-full">
+                    <Image
+                      src={
+                        property.mainImage ||
+                        property.images?.[0] ||
+                        "/images/pr.png"
+                      }
+                      alt={property.title}
+                      fill
+                      className="object-cover"
+                    />
 
-                  {/* For Sale tag */}
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-black/70 text-white px-3 py-1 text-xs rounded-md font-semibold">
-                      For Sale
-                    </span>
+                    {/* For Sale tag */}
+                    <div className="absolute top-3 left-3">
+                      <span className="bg-black/70 text-white px-3 py-1 text-xs rounded-md font-semibold">
+                        {property.status || "For Sale"}
+                      </span>
+                    </div>
+
+                    {/* Heart Icon */}
+                    <button className="absolute top-3 right-3 bg-white/70 hover:bg-white text-gray-500 p-2 rounded-full shadow-md">
+                      <Heart className="h-4 w-4" />
+                    </button>
                   </div>
 
-                  {/* Heart Icon */}
-                  <button className="absolute top-3 right-3 bg-white/70 hover:bg-white text-gray-500 p-2 rounded-full shadow-md">
-                    <Heart className="h-4 w-4" />
-                  </button>
+                  {/* Content */}
+                  <div className="p-5">
+                    <h3 className="text-xl font-semibold text-black">
+                      <Link
+                        href={`/properties/${property._id}`}
+                        className="hover:text-red-500 transition-colors"
+                      >
+                        {property.title}
+                      </Link>
+                    </h3>
+
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                      <MapPin className="h-4 w-4 text-red-500" />
+                      <span>{property.address}</span>
+                    </div>
+
+                    {/* Icons Row */}
+                    <div className="flex justify-between py-4 border-y mt-4 text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Bed className="h-4 w-4" />
+                        <span>Bed {property.beds}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Bath className="h-4 w-4" />
+                        <span>Bath {property.baths}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Ruler className="h-4 w-4" />
+                        <span>{property.area} sqft</span>
+                      </div>
+                    </div>
+
+                    {/* Price + Button */}
+                    <div className="mt-4 flex items-center justify-between">
+                      <p className="text-xl font-semibold text-black">
+                        {formatPrice(property.price)}
+                      </p>
+
+                      <Link
+                        href={`/properties/${property._id}`}
+                        className="border px-4 py-2 rounded-full text-sm hover:bg-gray-100 transition text-black"
+                      >
+                        View More
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <h3 className="text-xl font-semibold text-black">
-                    {property.title}
-                  </h3>
-
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                    <MapPin className="h-4 w-4 text-red-500" />
-                    <span>{property.location}</span>
-                  </div>
-
-                  {/* Icons Row */}
-                  <div className="flex justify-between py-4 border-y mt-4 text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Bed className="h-4 w-4" />
-                      <span>Bed {property.beds}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Bath className="h-4 w-4" />
-                      <span>Bath {property.baths}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Ruler className="h-4 w-4" />
-                      <span>{property.sqft} sqft</span>
-                    </div>
-                  </div>
-
-                  {/* Price + Button */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="text-xl font-semibold text-black">
-                      {property.price}
-                    </p>
-
-                    <Link
-                      href="#"
-                      className="border px-4 py-2 rounded-full text-sm hover:bg-gray-100 transition text-black"
-                    >
-                      View More
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        )}
       </div>
     </section>
   );
