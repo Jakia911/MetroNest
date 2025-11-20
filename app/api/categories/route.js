@@ -19,10 +19,13 @@ export async function GET(request) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("Categories API Error:", error);
     return NextResponse.json(
       {
         success: false,
         error: error.message,
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
       { status: 500 }
     );
