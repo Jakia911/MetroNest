@@ -7,11 +7,14 @@ import GallerySection from "./components/Home/GallerySection";
 
 import HeroSlider from "./components/Home/HeroSlider";
 import PropertyCarousel from "./components/Home/PropertyCarousel";
+import PropertySearchBar from "./components/Home/PropertySearchBar";
+import TestimonialSection from "./components/Home/TestimonialSection";
 
 export default function Home() {
   return (
     <>
       <HeroSlider />
+      <PropertySearchBar />
 
       <CategoriesSection />
       <PropertyCarousel />
@@ -20,6 +23,7 @@ export default function Home() {
 
       <ExploreNeighborhoodsSection />
       <FeaturedProperties />
+      <TestimonialSection />
       <FaqSection />
     </>
   );

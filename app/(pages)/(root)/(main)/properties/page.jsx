@@ -1,4 +1,6 @@
-import PageBanner from "@/components/shared/PageBanner";
+"use client";
+
+import PageBanner from "../../../../../components/shared/PageBanner.jsx";
 import PropertyListingSection from "./components/PropertyListingSection";
 
 const PropertiesPage = () => {

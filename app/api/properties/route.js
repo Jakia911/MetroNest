@@ -13,16 +13,49 @@ export async function GET(request) {
     const featured = searchParams.get("featured");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
+    const minArea = searchParams.get("minArea");
+    const maxArea = searchParams.get("maxArea");
+    const maxBeds = searchParams.get("maxBeds");
+    const maxBaths = searchParams.get("maxBaths");
+    const location = searchParams.get("location");
     const sortBy = searchParams.get("sortBy") || "default";
     const limit = parseInt(searchParams.get("limit")) || 0;
 
     // Build query
     const query = {};
-    if (type && type !== "View All") query.type = type;
+    if (type && type !== "View All" && type !== "Select Property Type")
+      query.type = type;
     if (status) query.status = status;
     if (featured === "true") query.featured = true;
-    if (minPrice) query.price = { ...query.price, $gte: parseInt(minPrice) };
-    if (maxPrice) query.price = { ...query.price, $lte: parseInt(maxPrice) };
+
+    // Price filter
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = parseInt(minPrice);
+      if (maxPrice) query.price.$lte = parseInt(maxPrice);
+    }
+
+    // Area filter
+    if (minArea || maxArea) {
+      query.area = {};
+      if (minArea) query.area.$gte = parseInt(minArea);
+      if (maxArea) query.area.$lte = parseInt(maxArea);
+    }
+
+    // Beds filter
+    if (maxBeds) {
+      query.beds = { $lte: parseInt(maxBeds) };
+    }
+
+    // Baths filter
+    if (maxBaths) {
+      query.baths = { $lte: parseInt(maxBaths) };
+    }
+
+    // Location filter
+    if (location && location !== "Select Location") {
+      query.address = { $regex: location, $options: "i" };
+    }
 
     // Build sort
     let sort = {};
